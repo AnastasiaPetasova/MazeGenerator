@@ -2,21 +2,15 @@ package sample;
 
 import java.util.Random;
 
-public class RandomMazeGenerator implements MazeGenerator {
+public class RandomMazeGenerator extends MazeGeneratorImpl {
     @Override
-    public Maze generate(int width, int height) {
-
-        Random random = new Random();
-
-        Maze maze = new Maze(width, height);
+    protected void generate(int width, int height, Maze maze) {
 
         for (int x = 0; x < width; x++){
             for (int y = 0; y < height; y++){
-                maze.set(x, y, random.nextBoolean());
+                maze.set(x, y, UtilsRandom.random.nextBoolean());
             }
         }
-
-        return maze;
 
     }
 
