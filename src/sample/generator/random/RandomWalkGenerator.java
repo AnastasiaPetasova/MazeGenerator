@@ -1,13 +1,16 @@
-package sample;
+package sample.generator.random;
+
+import sample.Maze;
+import sample.generator.MazeGeneratorImpl;
+import sample.UtilsRandom;
 
 import java.awt.*;
 
 import static sample.Maze.STEPS;
 
-public class RandomWalkMazeGenerator extends MazeGeneratorImpl {
+public class RandomWalkGenerator extends MazeGeneratorImpl {
     @Override
-    protected void generate(int width, int height, Maze maze) {
-
+    protected void generate() {
         maze.fill(Maze.WALL);
 
         double[] probabilities = { 0.4, 0.2, 0.2, 0.2 };
@@ -17,13 +20,13 @@ public class RandomWalkMazeGenerator extends MazeGeneratorImpl {
         int emptyCellsCount = 0;
 
         boolean hasExit = false;
-        for (int x = maze.startX, y = maze.startY, direction = 3; !hasExit || emptyCellsCount < neededEmptyCellsCount; ) {
+        for (int x = maze.startX, y = maze.startY, direction = 3; !hasExit || emptyCellsCount < neededEmptyCellsCount ; ) {
             if (maze.isWall(x, y)) {
                 maze.setEmpty(x, y);
                 ++emptyCellsCount;
             }
 
-            double probability = UtilsRandom.random.nextDouble();
+            double probability = UtilsRandom.nextProbability();
             double sum = 0;
             for (int i = 0; i < probabilities.length; ++i) {
                 sum += probabilities[i];
@@ -36,7 +39,13 @@ public class RandomWalkMazeGenerator extends MazeGeneratorImpl {
             int nextX = x + STEPS[direction].x;
             int nextY = y + STEPS[direction].y;
 
-            if (!maze.checkCell(nextX, nextY)) continue;
+            if (maze.isEdge(nextX, nextY)) {
+                hasExit |= !maze.isStart(x, y);
+            }
+
+            if (maze.isOuterWall(nextX, nextY)) {
+                continue;
+            }
 
             if (maze.isWall(nextX, nextY)) {
                 int emptyNeighborsCount = 0;
@@ -44,9 +53,7 @@ public class RandomWalkMazeGenerator extends MazeGeneratorImpl {
                     int neighbourX = nextX + step.x;
                     int neighbourY = nextY + step.y;
 
-                    if (maze.checkCell(neighbourX, neighbourY)) {
-                        if (Maze.EMPTY == maze.get(neighbourX, neighbourY)) ++emptyNeighborsCount;
-                    }
+                    if (Maze.EMPTY == maze.get(neighbourX, neighbourY)) ++emptyNeighborsCount;
                 }
 
                 if (emptyNeighborsCount > 1) continue;
@@ -54,10 +61,6 @@ public class RandomWalkMazeGenerator extends MazeGeneratorImpl {
 
             x = nextX;
             y = nextY;
-
-            if (maze.isEdge(x, y) && (x != maze.startX || y != maze.startY)) {
-                hasExit = (x != 0 || y != 0);
-            }
         }
     }
 

@@ -1,6 +1,7 @@
 
 package sample;
 
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
@@ -10,17 +11,19 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
+import sample.generator.MazeGenerators;
 
 import java.awt.*;
 import java.io.File;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Controller implements Initializable {
 
     @FXML
-    ListView<String> mazeType;
+    ListView<String> mazeGeneratorListView;
 
     @FXML
     Label mazeParametersLabel;
@@ -40,23 +43,8 @@ public class Controller implements Initializable {
     @FXML
     Button saveAsImageButton;
 
-    private Point getRandomEdgeNeighbourCell(Maze maze, int x, int y) {
-        List<Point> edgeNeighbours = new ArrayList<>();
-        for (Point step : Maze.STEPS) {
-            int neighbourX = x + step.x;
-            int neighbourY = y + step.y;
-
-            if (!maze.checkCell(neighbourX, neighbourY)) {
-                edgeNeighbours.add(new Point(neighbourX, neighbourY));
-            }
-        }
-
-        Random random = new Random();
-        return edgeNeighbours.get(random.nextInt(edgeNeighbours.size()));
-    }
-
     private void drawMazeCell(GraphicsContext graphicsContext, double cellWidth, double cellHeight, int x, int y) {
-        graphicsContext.fillRect((1 + x) * cellWidth, (1 + y) * cellHeight, cellWidth, cellHeight);
+        graphicsContext.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
     }
 
     private void drawMaze(Maze maze){
@@ -64,8 +52,8 @@ public class Controller implements Initializable {
         graphicsContext.setFill(Color.BLACK);
         graphicsContext.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
-        double cellWidth = canvas.getWidth() / (maze.width + 2);
-        double cellHeight = canvas.getHeight() / (maze.height + 2);
+        double cellWidth = canvas.getWidth() / maze.width;
+        double cellHeight = canvas.getHeight() / maze.height;
 
         graphicsContext.setFill(Color.WHITE);
 
@@ -77,20 +65,17 @@ public class Controller implements Initializable {
             }
         }
 
-        graphicsContext.setFill(Color.RED);
-
-        Point startHole = getRandomEdgeNeighbourCell(maze, maze.startX, maze.startY);
-        drawMazeCell(graphicsContext, cellWidth, cellHeight, startHole.x, startHole.y);
-
-        Point finishHole = getRandomEdgeNeighbourCell(maze, maze.finishX, maze.finishY);
-        drawMazeCell(graphicsContext, cellWidth, cellHeight, finishHole.x, finishHole.y);
-
         graphicsContext.setFill(Color.YELLOW);
 
         List<Point> startFinishPath = maze.calculateShortestPaths().calculateShortestPathTo(maze.finishX, maze.finishY);
         for (Point cell : startFinishPath) {
             drawMazeCell(graphicsContext, cellWidth, cellHeight, cell.x, cell.y);
         }
+
+        graphicsContext.setFill(Color.RED);
+
+        drawMazeCell(graphicsContext, cellWidth, cellHeight, maze.startX, maze.startY);
+        drawMazeCell(graphicsContext, cellWidth, cellHeight, maze.finishX, maze.finishY);
     }
 
     MazeGenerator lastMazeGenerator;
@@ -122,8 +107,8 @@ public class Controller implements Initializable {
     }
 
     private MazeGenerator getMazeGenerator() {
-        return new RandomWalkMazeGenerator();
-        //return new RandomMazeGenerator();
+        int generatorIndex = mazeGeneratorListView.getSelectionModel().getSelectedIndex();
+        return MazeGenerators.all().get(generatorIndex);
     }
 
     private void saveToText() {
@@ -180,10 +165,14 @@ public class Controller implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        canvas.setHeight(screenSize.height / 3.0);
-        canvas.setWidth(screenSize.width / 3.0);
+        initializeCanvas();
 
+        initializeGeneratorListView();
+
+        initializeButtons();
+    }
+
+    private void initializeButtons() {
         generateButton.setText("Сгенерируй нам, мальчик!");
 
         generateButton.setOnAction(actionEvent -> {
@@ -204,5 +193,23 @@ public class Controller implements Initializable {
         saveAsImageButton.setOnAction(actionEvent -> {
             saveAsImage();
         });
+    }
+
+    private void initializeCanvas() {
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        canvas.setHeight(screenSize.height / 3.0);
+        canvas.setWidth(screenSize.width / 3.0);
+    }
+
+    private void initializeGeneratorListView() {
+        mazeGeneratorListView.setEditable(false);
+        mazeGeneratorListView.setItems(
+                FXCollections.observableArrayList(
+                        MazeGenerators.all().stream()
+                        .map(Object::toString)
+                        .collect(Collectors.toList())
+                )
+        );
+        mazeGeneratorListView.getSelectionModel().selectLast();
     }
 }

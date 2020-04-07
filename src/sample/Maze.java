@@ -5,7 +5,7 @@ import java.util.*;
 
 public class Maze {
 
-    static final Point[] STEPS = {
+    public static final Point[] STEPS = {
             new Point(-1, 0),
             new Point(0, -1),
             new Point(1, 0),
@@ -20,6 +20,10 @@ public class Maze {
         return checkIndex(x, width) && checkIndex(y, height);
     }
 
+    static boolean isNearEdgeIndex(int index, int size) {
+        return 1 == index || size - 2 == index;
+    }
+
     static boolean isEdgeIndex(int index, int size) {
         return 0 == index || size - 1 == index;
     }
@@ -30,43 +34,49 @@ public class Maze {
     public static final boolean WALL = false;
     public static final boolean EMPTY = true;
 
-    int width;
-    int height;
+    public int width;
+    public int height;
 
     private boolean[][] field;
 
-    int startX, startY;
-    int finishX, finishY;
+    public int startX;
+    public int startY;
+    public int finishX;
+    public int finishY;
 
-    Maze(int width, int height) {
+    public Maze(int width, int height) {
         this.width = width;
         this.height = height;
         this.field = new boolean[height][width];
     }
 
-    void setStart(int x, int y) {
+    public void setStart(int x, int y) {
         this.startX = x;
         this.startY = y;
     }
 
-    void setFinish(int x, int y) {
+    public void setFinish(int x, int y) {
         this.finishX = x;
         this.finishY = y;
     }
 
-    Maze fill(boolean value) {
-        for (boolean[] row : field) {
-            Arrays.fill(row, value);
+    public Maze fill(boolean value) {
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                if (!isOuterWall(x, y)) {
+                    set(x, y, value);
+                }
+            }
         }
 
         return this;
     }
 
-    boolean get(int x, int y) {
+    public boolean get(int x, int y) {
         return field[y][x];
     }
 
-    boolean isWall(int x, int y) {
+    public boolean isWall(int x, int y) {
         return WALL == get(x, y);
     }
 
@@ -74,11 +84,15 @@ public class Maze {
         return EMPTY == get(x, y);
     }
 
-    boolean isEdge(int x, int y) {
+    public boolean isEdge(int x, int y) {
+        return isNearEdgeIndex(x, width) || isNearEdgeIndex(y, height);
+    }
+
+    public boolean isOuterWall(int x, int y) {
         return isEdgeIndex(x, width) || isEdgeIndex(y, height);
     }
 
-    boolean isStart(int x, int y) {
+    public boolean isStart(int x, int y) {
         return startX == x && startY == y;
     }
 
@@ -86,24 +100,23 @@ public class Maze {
         return finishX == x && finishY == y;
     }
 
-
-    void set(int x, int y, boolean value) {
+    public void set(int x, int y, boolean value) {
         field[y][x] = value;
     }
 
-    void setWall(int x, int y) {
+    public void setWall(int x, int y) {
         set(x, y, WALL);
     }
 
-    void setEmpty(int x, int y) {
+    public void setEmpty(int x, int y) {
         set(x, y, EMPTY);
     }
 
-    boolean checkCell(int x, int y) {
-        return checkCell(x, width, y, height);
+    public boolean notInside(int x, int y) {
+        return !checkCell(x, width, y, height);
     }
 
-    static class ShortestPaths {
+    public static class ShortestPaths {
 
         public static final Point NO_PARENT = new Point(-1, -1);
         public static final int UNREACHABLE = -1;
@@ -119,11 +132,11 @@ public class Maze {
             this.parents = parents;
         }
 
-        boolean isReachable(int x, int y) {
+        public boolean isReachable(int x, int y) {
             return UNREACHABLE != distances[x][y];
         }
 
-        int getDistance(int x, int y) {
+        public int getDistance(int x, int y) {
             return distances[x][y];
         }
 
@@ -145,7 +158,7 @@ public class Maze {
 
     private ShortestPaths shortestPaths;
 
-    ShortestPaths calculateShortestPaths() {
+    public ShortestPaths calculateShortestPaths() {
         Point start = new Point(startX, startY);
         if (null != shortestPaths && start.equals(shortestPaths.start)) {
             return shortestPaths;
@@ -171,7 +184,7 @@ public class Maze {
                 int toX = from.x + step.x;
                 int toY = from.y + step.y;
 
-                if (!checkCell(toX, toY)) continue;
+                if (notInside(toX, toY)) continue;
                 if (isWall(toX, toY)) continue;
 
                 if (distances[toX][toY] != ShortestPaths.UNREACHABLE) continue;
@@ -186,26 +199,24 @@ public class Maze {
         return shortestPaths = new ShortestPaths(start, distances, parents);
     }
 
-    class RandomDfsProcessor {
+    public static class RandomDfsProcessor {
 
-        boolean[][] used;
-        boolean foundFinish;
+        static int[] facts;
 
-        public RandomDfsProcessor() {
-            this.used = new boolean[width][height];
-            this.foundFinish = false;
+        static {
+            facts = new int[STEPS.length + 1];
+            facts[0] = 1;
+            for (int i = 1; i < facts.length; ++i) {
+                facts[i] = facts[i - 1] * i;
+            }
         }
 
-        int[] calculatePermutation(int permutationIndex) {
-            boolean[] usedIndexes = new boolean[4];
+        static int[] calculatePermutation(int permutationIndex) {
+            boolean[] usedIndexes = new boolean[STEPS.length];
 
-            int[] facts = new int[4];
-            facts[0] = 1;
-            for (int i = 1; i < 4; ++i) facts[i] = i * facts[i - 1];
-
-            int[] permutation = new int[4];
+            int[] permutation = new int[STEPS.length];
             for (int i = 3; i >= 0; --i) {
-                for (int index = 0; index < 4; ++index) {
+                for (int index = 0; index < STEPS.length; ++index) {
                     if (usedIndexes[index]) continue;
                     if (permutationIndex >= facts[i]) {
                         permutationIndex -= facts[i];
@@ -220,40 +231,98 @@ public class Maze {
             return permutation;
         }
 
-        int dfs(int fromX, int fromY) {
-            used[fromX][fromY] = true;
+        static int[] generateRandomStepsPermutation() {
+            int permutationIndex = UtilsRandom.nextInt(0, facts[STEPS.length]);
+            return calculatePermutation(permutationIndex);
+        }
 
-            int length = 1;
-            if (isFinish(fromX, fromY)) {
-                foundFinish = true;
-                return length;
+        protected boolean onEnter(int fromX, int fromY) {
+            return false;
+        }
+
+        protected void onExit(int fromX, int fromY) {
+
+        }
+
+        protected boolean notGo(int toX, int toY) {
+            return false;
+        }
+
+        protected boolean afterToDfs(int toX, int toY) {
+            return false;
+        }
+
+        public void dfs(int fromX, int fromY) {
+            if (onEnter(fromX, fromY)) {
+                return;
             }
 
-            int permutationIndex = UtilsRandom.random.nextInt(24);
-            int[] stepPermutation = calculatePermutation(permutationIndex);
-
+            int[] stepPermutation = generateRandomStepsPermutation();
             for (int stepIndex : stepPermutation) {
                 Point step = STEPS[stepIndex];
 
                 int toX = fromX + step.x;
                 int toY = fromY + step.y;
 
-                if (!checkCell(toX, toY)) continue;
-                if (isWall(toX, toY)) continue;
-                if (used[toX][toY]) continue;
+                if (notGo(toX, toY)) {
+                    continue;
+                }
 
-                length += dfs(toX, toY);
-                if (foundFinish) return length;
+                dfs(toX, toY);
+
+                if (afterToDfs(toX, toY)) {
+                    return;
+                }
             }
 
-            return length;
+            onExit(fromX, fromY);
         }
     }
 
     public int calculateRandomPathLength() {
-        RandomDfsProcessor processor  = new RandomDfsProcessor();
+        class RandomPathLengthCalculator extends RandomDfsProcessor {
 
-        return processor.dfs(startX, startY);
+            boolean[][] used;
+            boolean foundFinish;
+            int totalLength;
+
+            public RandomPathLengthCalculator() {
+                this.used = new boolean[width][height];
+                this.foundFinish = false;
+            }
+
+            @Override
+            protected boolean onEnter(int fromX, int fromY) {
+                used[fromX][fromY] = true;
+
+                ++totalLength;
+                if (isFinish(fromX, fromY)) {
+                    foundFinish = true;
+                }
+
+                return foundFinish;
+            }
+
+            @Override
+            protected boolean notGo(int toX, int toY) {
+                if (notInside(toX, toY)) return true;
+                if (isWall(toX, toY)) return true;
+                if (used[toX][toY]) return true;
+
+                return false;
+            }
+
+            @Override
+            protected boolean afterToDfs(int toX, int toY) {
+                return foundFinish;
+            }
+        }
+
+        RandomPathLengthCalculator processor  = new RandomPathLengthCalculator();
+
+        processor.dfs(startX, startY);
+
+        return processor.totalLength;
     }
 
     @Override
