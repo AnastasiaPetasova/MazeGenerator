@@ -51,19 +51,24 @@ public class MazeService {
 
     private static Maze readMaze(BufferedReader reader) throws IOException {
         StringTokenizer tokenizer = new StringTokenizer(reader.readLine());
+        int layersCount = Integer.parseInt(tokenizer.nextToken());
         int width = Integer.parseInt(tokenizer.nextToken());
         int height = Integer.parseInt(tokenizer.nextToken());
 
-        Maze maze = new Maze(width, height);
-        for (int y = 0; y < maze.height; ++y) {
-            String row = reader.readLine();
-            for (int x = 0; x < maze.width; ++x) {
-                if (Maze.WALL_CHAR == row.charAt(x)) {
-                    maze.setWall(x, y);
-                } else {
-                    maze.setEmpty(x, y);
+        Maze maze = new Maze(width, height, layersCount);
+        for (int z = 0; z < maze.layersCount; ++z) {
+            for (int y = 0; y < maze.height; ++y) {
+                String row = reader.readLine();
+                for (int x = 0; x < maze.width; ++x) {
+                    if (Maze.WALL_CHAR == row.charAt(x)) {
+                        maze.setWall(x, y, z);
+                    } else {
+                        maze.setEmpty(x, y, z);
+                    }
                 }
             }
+
+            reader.readLine();
         }
 
         return maze;

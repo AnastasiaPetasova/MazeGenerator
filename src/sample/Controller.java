@@ -9,6 +9,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import sample.generator.MazeGenerators;
@@ -16,8 +17,8 @@ import sample.generator.MazeGenerators;
 import java.awt.*;
 import java.io.File;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class Controller implements Initializable {
@@ -43,8 +44,31 @@ public class Controller implements Initializable {
     @FXML
     Button saveAsImageButton;
 
+    @FXML
+    TextField selectedLayerTextField;
+
+    @FXML
+    Button layerDownButton;
+
+    @FXML
+    Button layerUpButton;
+
+    final int DOWN = 1, UP = 0;
+
+    private void drawMazeHalf(
+            GraphicsContext graphicsContext,
+            double cellWidth, double cellHeight,
+            int x, int y, int type) {
+        double yStart = y * cellHeight + type * cellHeight / 2;
+        graphicsContext.fillRect(
+                x * cellWidth, yStart,
+                cellWidth, cellHeight / 2);
+    }
+
     private void drawMazeCell(GraphicsContext graphicsContext, double cellWidth, double cellHeight, int x, int y) {
-        graphicsContext.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
+        graphicsContext.fillRect(
+                x * cellWidth, y * cellHeight,
+                cellWidth, cellHeight);
     }
 
     private void drawMaze(Maze maze){
@@ -55,27 +79,60 @@ public class Controller implements Initializable {
         double cellWidth = canvas.getWidth() / maze.width;
         double cellHeight = canvas.getHeight() / maze.height;
 
-        graphicsContext.setFill(Color.WHITE);
+        final int z = selectedLayer;
 
         for (int x = 0; x < maze.width; x++){
             for (int y = 0; y < maze.height; y++){
-                if (maze.isEmpty(x, y)){
+                if (maze.isEmpty(x, y, z)) {
+                    graphicsContext.setFill(Color.WHITE);
                     drawMazeCell(graphicsContext, cellWidth, cellHeight, x, y);
+
+                    if (z > 0 && maze.isEmpty(x, y, z - 1)) {
+                        graphicsContext.setFill(Color.PURPLE);
+                        drawMazeHalf(graphicsContext, cellWidth, cellHeight, x, y, DOWN);
+                    }
+
+                    if (z < maze.layersCount - 1 && maze.isEmpty(x, y, z + 1)) {
+                        graphicsContext.setFill(Color.ORANGE);
+                        drawMazeHalf(graphicsContext, cellWidth, cellHeight, x, y, UP);
+                    }
                 }
             }
         }
 
-        graphicsContext.setFill(Color.YELLOW);
+        List<Point3D> startFinishPath = maze.calculateShortestPaths()
+                .calculateShortestPathTo(maze.finish);
+        for (int pathIndex = 0; pathIndex < startFinishPath.size(); ++pathIndex) {
+            Point3D cell = startFinishPath.get(pathIndex);
 
-        List<Point> startFinishPath = maze.calculateShortestPaths().calculateShortestPathTo(maze.finishX, maze.finishY);
-        for (Point cell : startFinishPath) {
-            drawMazeCell(graphicsContext, cellWidth, cellHeight, cell.x, cell.y);
+            if (z == cell.z) {
+                graphicsContext.setFill(Color.YELLOW);
+                drawMazeCell(graphicsContext, cellWidth, cellHeight, cell.x, cell.y);
+            }
+
+            if (pathIndex + 1 < startFinishPath.size()) {
+                Point3D next = startFinishPath.get(pathIndex + 1);
+
+                if (next.equalsTo(cell.x, cell.y, z - 1)) {
+                    graphicsContext.setFill(Color.PURPLE);
+                    drawMazeHalf(graphicsContext, cellWidth, cellHeight, cell.x, cell.y, DOWN);
+                }
+                if (next.equalsTo(cell.x, cell.y, z + 1)) {
+                    graphicsContext.setFill(Color.ORANGE);
+                    drawMazeHalf(graphicsContext, cellWidth, cellHeight, cell.x, cell.y, UP);
+                }
+            }
         }
 
         graphicsContext.setFill(Color.RED);
 
-        drawMazeCell(graphicsContext, cellWidth, cellHeight, maze.startX, maze.startY);
-        drawMazeCell(graphicsContext, cellWidth, cellHeight, maze.finishX, maze.finishY);
+        if (z == maze.start.z) {
+            drawMazeCell(graphicsContext, cellWidth, cellHeight, maze.start.x, maze.start.y);
+        }
+
+        if (z == maze.finish.z) {
+            drawMazeCell(graphicsContext, cellWidth, cellHeight, maze.finish.x, maze.finish.y);
+        }
     }
 
     MazeGenerator lastMazeGenerator;
@@ -84,7 +141,9 @@ public class Controller implements Initializable {
 
     void generateAndDraw(){
         lastMaze = generateMaze();
-        drawMaze(lastMaze);
+
+        setLayer(1);
+        layerUpButton.setDisable(false);
 
         lastMazeParameters = new MazeParameters(lastMaze, lastMazeGenerator);
         lastMazeParameters.calculateParameters();
@@ -99,11 +158,12 @@ public class Controller implements Initializable {
     }
 
     private Maze generateMaze() {
-        int width = 100;
-        int height = 100;
+        int width = 25;
+        int height = 25;
+        int layersCount = 25;
 
         lastMazeGenerator = getMazeGenerator();
-        return lastMazeGenerator.generate(width, height);
+        return lastMazeGenerator.generate(width, height, layersCount);
     }
 
     private MazeGenerator getMazeGenerator() {
@@ -170,6 +230,8 @@ public class Controller implements Initializable {
         initializeGeneratorListView();
 
         initializeButtons();
+
+        initializeLayerElements();
     }
 
     private void initializeButtons() {
@@ -211,5 +273,40 @@ public class Controller implements Initializable {
                 )
         );
         mazeGeneratorListView.getSelectionModel().selectLast();
+    }
+
+    private int selectedLayer;
+
+    private void setLayer(int layer) {
+        selectedLayer = layer;
+        selectedLayerTextField.setText("" + selectedLayer);
+
+        drawMaze(lastMaze);
+    }
+
+    private void initializeLayerElements() {
+        layerDownButton.setDisable(true);
+        layerDownButton.setOnAction(event -> {
+            if (selectedLayer > 1) {
+                setLayer(selectedLayer - 1);
+                layerUpButton.setDisable(false);
+            }
+
+            if (1 == selectedLayer) {
+                layerDownButton.setDisable(true);
+            }
+        });
+
+        layerUpButton.setDisable(true);
+        layerUpButton.setOnAction(event -> {
+            if (selectedLayer + 1 < lastMaze.layersCount - 1) {
+                setLayer(selectedLayer + 1);
+                layerDownButton.setDisable(false);
+            }
+
+            if (lastMaze.layersCount - 2 == selectedLayer) {
+                layerUpButton.setDisable(true);
+            }
+        });
     }
 }

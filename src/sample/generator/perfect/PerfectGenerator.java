@@ -1,10 +1,11 @@
 package sample.generator.perfect;
 
 import sample.Maze;
+import sample.Point3D;
 import sample.generator.MazeGeneratorImpl;
 
-import java.awt.Point;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class PerfectGenerator extends MazeGeneratorImpl {
 
@@ -22,51 +23,52 @@ public abstract class PerfectGenerator extends MazeGeneratorImpl {
         maze.fill(filledValue);
     }
 
-    abstract void fillStartedPoints(List<Point> startedPoints);
+    abstract void fillStartedPoints(List<Point3D> startedPoints);
 
-    List<Point> generateStartedPoints() {
-        List<Point> startedPoints = new ArrayList<>();
+    List<Point3D> generateStartedPoints() {
+        List<Point3D> startedPoints = new ArrayList<>();
         fillStartedPoints(startedPoints);
         return startedPoints;
     }
 
-    List<Point> findNeighbours(int x, int y, boolean value) {
-        List<Point> neighbours = new ArrayList<>();
+    List<Point3D> findNeighbours(int x, int y, int z, boolean value) {
+        List<Point3D> neighbours = new ArrayList<>();
 
-        for (Point step : Maze.STEPS) {
+        for (Point3D step : Maze.STEPS) {
             int neighbourX = x + step.x;
             int neighbourY = y + step.y;
+            int neighbourZ = z + step.z;
 
-            if (maze.notInside(neighbourX, neighbourY)) continue;
-            if (value == maze.get(neighbourX, neighbourY)) {
-                neighbours.add(new Point(neighbourX, neighbourY));
+            if (maze.notInside(neighbourX, neighbourY, neighbourZ)) continue;
+            if (value == maze.get(neighbourX, neighbourY, neighbourZ)) {
+                neighbours.add(new Point3D(neighbourX, neighbourY, neighbourZ));
             }
         }
 
         return neighbours;
     }
 
-    List<Point> findCutNeighbours(int x, int y) {
-        return findNeighbours(x, y, cutValue);
+    List<Point3D> findCutNeighbours(int x, int y, int z) {
+        return findNeighbours(x, y, z, cutValue);
     }
 
-    List<Point> findFilledNeighbours(int x, int y) {
-        return findNeighbours(x, y, filledValue);
+    List<Point3D> findFilledNeighbours(Point3D point) {
+        return findNeighbours(point.x, point.y, point.z, filledValue);
     }
 
-    boolean isStuckCell(int x, int y) {
-        if (maze.notInside(x, y)) return false;
-        if (maze.isOuterWall(x, y)) return false;
+    boolean isStuckCell(int x, int y, int z) {
+        if (maze.notInside(x, y, z)) return false;
+        if (maze.isOuterWall(x, y, z)) return false;
 
-        List<Point> cutNeighbours = findCutNeighbours(x, y);
+        List<Point3D> cutNeighbours = findCutNeighbours(x, y, z);
         return cutNeighbours.size() == 1; // 1 is (fromX, fromY)
     }
 
-    void cutCell(Point p) {
-        cutCell(p.x, p.y);
+    void cutCell(Point3D p) {
+        cutCell(p.x, p.y, p.z);
     }
 
-    void cutCell(int x, int y) {
-        maze.set(x, y, cutValue);
+    void cutCell(int x, int y, int z) {
+        maze.set(x, y, z, cutValue);
     }
 }

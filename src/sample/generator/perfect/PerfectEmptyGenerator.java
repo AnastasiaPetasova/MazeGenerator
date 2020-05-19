@@ -1,8 +1,8 @@
 package sample.generator.perfect;
 
 import sample.Maze;
+import sample.Point3D;
 
-import java.awt.*;
 import java.util.List;
 
 public abstract class PerfectEmptyGenerator extends PerfectGenerator {
@@ -11,7 +11,7 @@ public abstract class PerfectEmptyGenerator extends PerfectGenerator {
         super(Maze.EMPTY);
     }
 
-    void fillStartedPoints(List<Point> startedPoints) {
-        startedPoints.add(new Point(maze.startX, maze.startY));
+    void fillStartedPoints(List<Point3D> startedPoints) {
+        startedPoints.add(new Point3D(maze.start));
     }
 }

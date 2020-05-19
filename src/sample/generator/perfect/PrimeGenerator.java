@@ -1,12 +1,13 @@
 package sample.generator.perfect;
 
-import java.awt.*;
+import sample.Point3D;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class PrimeGenerator extends PerfectEmptyGenerator {
 
-    List<Point> activePoints;
+    List<Point3D> activePoints;
 
     PrimeGenerator() {
         this.activePoints = new ArrayList<>();
@@ -17,17 +18,17 @@ public abstract class PrimeGenerator extends PerfectEmptyGenerator {
         activePoints.clear();
     }
 
-    abstract Point calculateFrom();
+    abstract Point3D calculateFrom();
 
-    void onActionPointAdded(Point point) {
+    void onActionPointAdded(Point3D point) {
 
     }
 
-    void addActiveNeighbours(Point point) {
-        List<Point> filledNeighbours = findFilledNeighbours(point.x, point.y);
-        for (Point filledNeighbour : filledNeighbours) {
-            if (maze.isOuterWall(filledNeighbour.x, filledNeighbour.y)) continue;
-            if (cutValue == maze.get(filledNeighbour.x, filledNeighbour.y)) continue;
+    void addActiveNeighbours(Point3D point) {
+        List<Point3D> filledNeighbours = findFilledNeighbours(point);
+        for (Point3D filledNeighbour : filledNeighbours) {
+            if (maze.isOuterWall(filledNeighbour)) continue;
+            if (cutValue == maze.get(filledNeighbour)) continue;
             if (activePoints.contains(filledNeighbour)) continue;
 
             activePoints.add(filledNeighbour);
@@ -37,21 +38,21 @@ public abstract class PrimeGenerator extends PerfectEmptyGenerator {
 
     @Override
     protected void generate() {
-        List<Point> startedPoints = generateStartedPoints();
-        for (Point startedPoint : startedPoints) {
+        List<Point3D> startedPoints = generateStartedPoints();
+        for (Point3D startedPoint : startedPoints) {
             cutCell(startedPoint);
         }
 
         this.activePoints = new ArrayList<>();
-        for (Point startedPoint : startedPoints) {
+        for (Point3D startedPoint : startedPoints) {
             addActiveNeighbours(startedPoint);
         }
 
         while (activePoints.size() > 0) {
-            Point from = calculateFrom();
+            Point3D from = calculateFrom();
             activePoints.remove(from);
 
-            if (!isStuckCell(from.x, from.y)) continue;
+            if (!isStuckCell(from.x, from.y, from.z)) continue;
 
             cutCell(from);
             addActiveNeighbours(from);

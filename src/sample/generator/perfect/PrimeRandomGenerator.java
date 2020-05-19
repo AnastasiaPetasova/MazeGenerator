@@ -1,12 +1,11 @@
 package sample.generator.perfect;
 
+import sample.Point3D;
 import sample.UtilsRandom;
-
-import java.awt.*;
 
 public class PrimeRandomGenerator extends PrimeGenerator {
 
-    Point calculateFrom() {
+    Point3D calculateFrom() {
         return UtilsRandom.nextElement(activePoints);
     }
 }

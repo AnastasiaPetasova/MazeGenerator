@@ -21,13 +21,15 @@ public class MazeParameters {
         this.numberOfAccessibleCells = 0;
         for (int x = 0; x < maze.width; ++x) {
             for (int y = 0; y < maze.height; ++y) {
-                if (shortestPaths.isReachable(x, y)) {
-                    numberOfAccessibleCells++;
+                for (int z = 0; z < maze.layersCount; ++z) {
+                    if (shortestPaths.isReachable(x, y, z)) {
+                        numberOfAccessibleCells++;
+                    }
                 }
             }
         }
 
-        this.minPathLength = shortestPaths.getDistance(maze.finishX, maze.finishY);
+        this.minPathLength = shortestPaths.getDistance(maze.finish);
 
         this.averagePathLength = 0;
 

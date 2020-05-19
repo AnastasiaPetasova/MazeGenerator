@@ -1,23 +1,32 @@
 package sample;
 
-import java.awt.Point;
 import java.util.*;
 
 public class Maze {
 
-    public static final Point[] STEPS = {
-            new Point(-1, 0),
-            new Point(0, -1),
-            new Point(1, 0),
-            new Point(0, 1)
-    };
+    public static final Point3D[] STEPS;
+
+    static {
+        List<Point3D> directions = new ArrayList<>();
+        int[] deltas = { -1, 1 };
+
+        for (int dx : deltas) {
+            directions.add(new Point3D(dx, 0, 0));
+        }
+
+        for (int dy : deltas) {
+            directions.add(new Point3D(0, dy, 0));
+        }
+
+        for (int dz : deltas) {
+            directions.add(new Point3D(0, 0, dz));
+        }
+
+        STEPS = directions.toArray(new Point3D[0]);
+    }
 
     static boolean checkIndex(int index, int size) {
         return 0 <= index && index < size;
-    }
-
-    static boolean checkCell(int x, int width, int y, int height) {
-        return checkIndex(x, width) && checkIndex(y, height);
     }
 
     static boolean isNearEdgeIndex(int index, int size) {
@@ -36,119 +45,155 @@ public class Maze {
 
     public int width;
     public int height;
+    public int layersCount;
 
-    private boolean[][] field;
+    private boolean[][][] field;
 
-    public int startX;
-    public int startY;
-    public int finishX;
-    public int finishY;
+    public Point3D start;
+    public Point3D finish;
 
-    public Maze(int width, int height) {
+    public Maze(int width, int height, int layersCount) {
         this.width = width;
         this.height = height;
-        this.field = new boolean[height][width];
+        this.layersCount = layersCount;
+        this.field = new boolean[layersCount][height][width];
     }
 
-    public void setStart(int x, int y) {
-        this.startX = x;
-        this.startY = y;
+    public void setStart(Point3D point) {
+        setStart(point.x, point.y, point.z);
     }
 
-    public void setFinish(int x, int y) {
-        this.finishX = x;
-        this.finishY = y;
+    public void setStart(int x, int y, int z) {
+        this.start = new Point3D(x, y, z);
     }
 
-    public Maze fill(boolean value) {
-        for (int x = 0; x < width; ++x) {
+    public void setFinish(Point3D point) {
+        setFinish(point.x, point.y, point.z);
+    }
+
+    public void setFinish(int x, int y, int z) {
+        this.finish = new Point3D(x, y, z);
+    }
+
+    public void fill(boolean value) {
+        for (int z = 0; z < layersCount; ++z) {
             for (int y = 0; y < height; ++y) {
-                if (!isOuterWall(x, y)) {
-                    set(x, y, value);
+                for (int x = 0; x < width; ++x) {
+                    if (!isOuterWall(x, y, z)) {
+                        set(x, y, z, value);
+                    }
                 }
             }
         }
-
-        return this;
     }
 
-    public boolean get(int x, int y) {
-        return field[y][x];
+    public boolean get(Point3D point) {
+        return get(point.x, point.y, point.z);
     }
 
-    public boolean isWall(int x, int y) {
-        return WALL == get(x, y);
+    public boolean get(int x, int y, int z) {
+        return field[z][y][x];
     }
 
-    boolean isEmpty(int x, int y) {
-        return EMPTY == get(x, y);
+    public boolean isWall(Point3D point) {
+        return isWall(point.x, point.y, point.z);
     }
 
-    public boolean isEdge(int x, int y) {
-        return isNearEdgeIndex(x, width) || isNearEdgeIndex(y, height);
+    public boolean isWall(int x, int y, int z) {
+        return WALL == get(x, y, z);
     }
 
-    public boolean isOuterWall(int x, int y) {
-        return isEdgeIndex(x, width) || isEdgeIndex(y, height);
+    boolean isEmpty(int x, int y, int z) {
+        return EMPTY == get(x, y, z);
     }
 
-    public boolean isStart(int x, int y) {
-        return startX == x && startY == y;
+    public boolean isEdge(int x, int y, int z) {
+        return isNearEdgeIndex(x, width) || isNearEdgeIndex(y, height) || isNearEdgeIndex(z, layersCount);
     }
 
-    boolean isFinish(int x, int y) {
-        return finishX == x && finishY == y;
+    public boolean isOuterWall(Point3D point) {
+        return isOuterWall(point.x, point.y, point.z);
     }
 
-    public void set(int x, int y, boolean value) {
-        field[y][x] = value;
+    public boolean isOuterWall(int x, int y, int z) {
+        return isEdgeIndex(x, width) || isEdgeIndex(y, height) || isEdgeIndex(z, layersCount);
     }
 
-    public void setWall(int x, int y) {
-        set(x, y, WALL);
+    public boolean isStart(Point3D point) {
+        return isStart(point.x, point.y, point.z);
     }
 
-    public void setEmpty(int x, int y) {
-        set(x, y, EMPTY);
+    public boolean isStart(int x, int y, int z) {
+        return null != start && start.equalsTo(x, y, z);
     }
 
-    public boolean notInside(int x, int y) {
-        return !checkCell(x, width, y, height);
+    boolean isFinish(int x, int y, int z) {
+        return null != finish && finish.equalsTo(x, y, z);
+    }
+
+    public void set(int x, int y, int z, boolean value) {
+        field[z][y][x] = value;
+    }
+
+    public void setWall(int x, int y, int z) {
+        set(x, y, z, WALL);
+    }
+
+    public void setEmpty(Point3D point) {
+        setEmpty(point.x, point.y, point.z);
+    }
+
+    public void setEmpty(int x, int y, int z) {
+        set(x, y, z, EMPTY);
+    }
+
+    public boolean checkCell(int x, int y, int z) {
+        return checkIndex(x, width) && checkIndex(y, height) && checkIndex(z, layersCount);
+    }
+
+    public boolean notInside(int x, int y, int z) {
+        return !checkCell(x, y, z);
     }
 
     public static class ShortestPaths {
 
-        public static final Point NO_PARENT = new Point(-1, -1);
+        public static final Point3D NO_PARENT = new Point3D(-1, -1, -1);
         public static final int UNREACHABLE = -1;
-        public static final List<Point> NO_PATH = new ArrayList<>();
+        public static final List<Point3D> NO_PATH = new ArrayList<>();
 
-        Point start;
-        private int[][] distances;
-        private Point[][] parents;
+        Point3D start;
+        private int[][][] distances;
+        private Point3D[][][] parents;
 
-        public ShortestPaths(Point start, int[][] distances, Point[][] parents) {
+        public ShortestPaths(Point3D start, int[][][] distances, Point3D[][][] parents) {
             this.start = start;
             this.distances = distances;
             this.parents = parents;
         }
 
-        public boolean isReachable(int x, int y) {
-            return UNREACHABLE != distances[x][y];
+        public boolean isReachable(int x, int y, int z) {
+            return UNREACHABLE != distances[x][y][z];
         }
 
-        public int getDistance(int x, int y) {
-            return distances[x][y];
+        public int getDistance(Point3D point) {
+            return getDistance(point.x, point.y, point.z);
         }
 
-        List<Point> calculateShortestPathTo(int x, int y) {
-            if (!isReachable(x, y)) return NO_PATH;
+        public int getDistance(int x, int y, int z) {
+            return distances[x][y][z];
+        }
 
-            List<Point> path = new ArrayList<>();
+        List<Point3D> calculateShortestPathTo(Point3D target) {
 
-            for (Point cur = new Point(x, y),
-                 startParent = parents[start.x][start.y]; !cur.equals(startParent); ) {
+            if (!isReachable(target.x, target.y, target.z)) return NO_PATH;
+
+            List<Point3D> path = new ArrayList<>();
+
+            for (Point3D cur = new Point3D(target),
+                 startParent = parents[start.x][start.y][start.z];
+                 !cur.equals(startParent); ) {
                 path.add(cur);
-                cur = parents[cur.x][cur.y];
+                cur = parents[cur.x][cur.y][cur.z];
             }
 
             Collections.reverse(path);
@@ -159,40 +204,42 @@ public class Maze {
     private ShortestPaths shortestPaths;
 
     public ShortestPaths calculateShortestPaths() {
-        Point start = new Point(startX, startY);
         if (null != shortestPaths && start.equals(shortestPaths.start)) {
             return shortestPaths;
         }
 
-        int[][] distances = new int[width][height];
-        for (int[] d1 : distances) {
-            Arrays.fill(d1, ShortestPaths.UNREACHABLE);
+        int[][][] distances = new int[width][height][layersCount];
+        for (int[][] d2 : distances) {
+            for (int[] d1 : d2) {
+                Arrays.fill(d1, ShortestPaths.UNREACHABLE);
+            }
         }
 
-        Point[][] parents = new Point[width][height];
+        Point3D[][][] parents = new Point3D[width][height][layersCount];
 
-        Queue<Point> queue = new ArrayDeque<>();
+        Queue<Point3D> queue = new ArrayDeque<>();
 
         queue.add(start);
-        distances[start.x][start.y] = 0;
-        parents[start.x][start.y] = ShortestPaths.NO_PARENT;
+        distances[start.x][start.y][start.z] = 0;
+        parents[start.x][start.y][start.z] = ShortestPaths.NO_PARENT;
 
         while (queue.size() > 0) {
-            Point from = queue.poll();
+            Point3D from = queue.poll();
 
-            for (Point step : STEPS) {
+            for (Point3D step : STEPS) {
                 int toX = from.x + step.x;
                 int toY = from.y + step.y;
+                int toZ = from.z + step.z;
 
-                if (notInside(toX, toY)) continue;
-                if (isWall(toX, toY)) continue;
+                if (notInside(toX, toY, toZ)) continue;
+                if (isWall(toX, toY, toZ)) continue;
 
-                if (distances[toX][toY] != ShortestPaths.UNREACHABLE) continue;
+                if (distances[toX][toY][toZ] != ShortestPaths.UNREACHABLE) continue;
 
-                distances[toX][toY] = distances[from.x][from.y] + 1;
-                parents[toX][toY] = from;
+                distances[toX][toY][toZ] = distances[from.x][from.y][from.z] + 1;
+                parents[toX][toY][toZ] = from;
 
-                queue.add(new Point(toX, toY));
+                queue.add(new Point3D(toX, toY, toZ));
             }
         }
 
@@ -215,7 +262,7 @@ public class Maze {
             boolean[] usedIndexes = new boolean[STEPS.length];
 
             int[] permutation = new int[STEPS.length];
-            for (int i = 3; i >= 0; --i) {
+            for (int i = STEPS.length - 1; i >= 0; --i) {
                 for (int index = 0; index < STEPS.length; ++index) {
                     if (usedIndexes[index]) continue;
                     if (permutationIndex >= facts[i]) {
@@ -236,67 +283,68 @@ public class Maze {
             return calculatePermutation(permutationIndex);
         }
 
-        protected boolean onEnter(int fromX, int fromY) {
+        protected boolean onEnter(int fromX, int fromY, int fromZ) {
             return false;
         }
 
-        protected void onExit(int fromX, int fromY) {
+        protected void onExit(int fromX, int fromY, int fromZ) {
 
         }
 
-        protected boolean notGo(int toX, int toY) {
+        protected boolean notGo(int toX, int toY, int toZ) {
             return false;
         }
 
-        protected boolean afterToDfs(int toX, int toY) {
+        protected boolean afterToDfs(int toX, int toY, int toZ) {
             return false;
         }
 
-        public void dfs(int fromX, int fromY) {
-            if (onEnter(fromX, fromY)) {
+        public void dfs(int fromX, int fromY, int fromZ) {
+            if (onEnter(fromX, fromY, fromZ)) {
                 return;
             }
 
             int[] stepPermutation = generateRandomStepsPermutation();
             for (int stepIndex : stepPermutation) {
-                Point step = STEPS[stepIndex];
+                Point3D step = STEPS[stepIndex];
 
                 int toX = fromX + step.x;
                 int toY = fromY + step.y;
+                int toZ = fromZ + step.z;
 
-                if (notGo(toX, toY)) {
+                if (notGo(toX, toY, toZ)) {
                     continue;
                 }
 
-                dfs(toX, toY);
+                dfs(toX, toY, toZ);
 
-                if (afterToDfs(toX, toY)) {
+                if (afterToDfs(toX, toY, toZ)) {
                     return;
                 }
             }
 
-            onExit(fromX, fromY);
+            onExit(fromX, fromY, fromZ);
         }
     }
 
     public int calculateRandomPathLength() {
         class RandomPathLengthCalculator extends RandomDfsProcessor {
 
-            boolean[][] used;
+            boolean[][][] used;
             boolean foundFinish;
             int totalLength;
 
             public RandomPathLengthCalculator() {
-                this.used = new boolean[width][height];
+                this.used = new boolean[width][height][layersCount];
                 this.foundFinish = false;
             }
 
             @Override
-            protected boolean onEnter(int fromX, int fromY) {
-                used[fromX][fromY] = true;
+            protected boolean onEnter(int fromX, int fromY, int fromZ) {
+                used[fromX][fromY][fromZ] = true;
 
                 ++totalLength;
-                if (isFinish(fromX, fromY)) {
+                if (isFinish(fromX, fromY, fromZ)) {
                     foundFinish = true;
                 }
 
@@ -304,23 +352,21 @@ public class Maze {
             }
 
             @Override
-            protected boolean notGo(int toX, int toY) {
-                if (notInside(toX, toY)) return true;
-                if (isWall(toX, toY)) return true;
-                if (used[toX][toY]) return true;
-
-                return false;
+            protected boolean notGo(int toX, int toY, int toZ) {
+                if (notInside(toX, toY, toZ)) return true;
+                if (isWall(toX, toY, toZ)) return true;
+                return used[toX][toY][toZ];
             }
 
             @Override
-            protected boolean afterToDfs(int toX, int toY) {
+            protected boolean afterToDfs(int toX, int toY, int toZ) {
                 return foundFinish;
             }
         }
 
         RandomPathLengthCalculator processor  = new RandomPathLengthCalculator();
 
-        processor.dfs(startX, startY);
+        processor.dfs(start.x, start.y, start.z);
 
         return processor.totalLength;
     }
@@ -328,13 +374,20 @@ public class Maze {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(width).append(' ').append(height).append('\n');
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
-                stringBuilder.append(isWall(x, y) ? WALL_CHAR : EMPTY_CHAR);
+        stringBuilder
+                .append(layersCount).append(' ')
+                .append(width).append(' ')
+                .append(height).append('\n');
+        for (int z = 0; z < layersCount; ++z) {
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    stringBuilder.append(isWall(x, y, z) ? WALL_CHAR : EMPTY_CHAR);
+                }
+                stringBuilder.append('\n');
             }
             stringBuilder.append('\n');
         }
+
         return stringBuilder.toString();
     }
 }

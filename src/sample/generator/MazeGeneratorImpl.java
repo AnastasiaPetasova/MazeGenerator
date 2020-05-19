@@ -2,9 +2,9 @@ package sample.generator;
 
 import sample.Maze;
 import sample.MazeGenerator;
+import sample.Point3D;
 import sample.UtilsRandom;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +15,8 @@ public abstract class MazeGeneratorImpl implements MazeGenerator {
     protected Maze maze;
 
     @Override
-    public Maze generate(int width, int height) {
-        this.maze = new Maze(width + 2, height + 2);
+    public Maze generate(int width, int height, int layersCount) {
+        this.maze = new Maze(width + 2, height + 2, layersCount + 2);
 
         clear();
 
@@ -30,25 +30,35 @@ public abstract class MazeGeneratorImpl implements MazeGenerator {
     }
 
     private void coverByWalls() {
-        for (int x = 0; x < maze.width; ++x) {
-            maze.setWall(x, 0);
-            maze.setWall(x, maze.height - 1);
+        for (int z = 0; z < maze.layersCount; ++z) {
+            for (int x = 0; x < maze.width; ++x) {
+                maze.setWall(x, 0, z);
+                maze.setWall(x, maze.height - 1, z);
+            }
+
+            for (int y = 0; y < maze.height; ++y) {
+                maze.setWall(0, y, z);
+                maze.setWall(maze.width - 1, y, z);
+            }
         }
 
-        for (int y = 0; y < maze.height; ++y) {
-            maze.setWall(0, y);
-            maze.setWall(maze.width - 1, y);
+        for (int x = 0; x < maze.width; ++x) {
+            for (int y = 0; y < maze.height; ++y) {
+                maze.setWall(x, y, 0);
+                maze.setWall(x, y, maze.layersCount - 1);
+            }
         }
     }
 
-    private Point getRandomEdgeNeighbourCell(int x, int y) {
-        List<Point> edgeNeighbours = new ArrayList<>();
-        for (Point step : Maze.STEPS) {
-            int neighbourX = x + step.x;
-            int neighbourY = y + step.y;
+    private Point3D getRandomEdgeNeighbourCell(Point3D point) {
+        List<Point3D> edgeNeighbours = new ArrayList<>();
+        for (Point3D step : Maze.STEPS) {
+            int neighbourX = point.x + step.x;
+            int neighbourY = point.y + step.y;
+            int neighbourZ = point.z + step.z;
 
-            if (maze.isOuterWall(neighbourX, neighbourY)) {
-                edgeNeighbours.add(new Point(neighbourX, neighbourY));
+            if (maze.isOuterWall(neighbourX, neighbourY, neighbourZ)) {
+                edgeNeighbours.add(new Point3D(neighbourX, neighbourY, neighbourZ));
             }
         }
 
@@ -65,42 +75,44 @@ public abstract class MazeGeneratorImpl implements MazeGenerator {
     }
 
     protected void findStart() {
-        maze.setStart(1, 1);
+        maze.setStart(1, 1, 1);
     }
 
     protected void postGenerate() {
         findFinish();
 
-        Point startHole = getRandomEdgeNeighbourCell(maze.startX, maze.startY);
-        maze.setEmpty(startHole.x, startHole.y);
+        Point3D startHole = getRandomEdgeNeighbourCell(maze.start);
+        maze.setEmpty(startHole);
 
-        Point finishHole = getRandomEdgeNeighbourCell(maze.finishX, maze.finishY);
-        maze.setEmpty(finishHole.x, finishHole.y);
+        Point3D finishHole = getRandomEdgeNeighbourCell(maze.finish);
+        maze.setEmpty(finishHole);
 
-        maze.setStart(startHole.x, startHole.y);
-        maze.setFinish(finishHole.x, finishHole.y);
+        maze.setStart(startHole);
+        maze.setFinish(finishHole);
     }
 
     protected void findFinish() {
         Maze.ShortestPaths shortestPaths = maze.calculateShortestPaths();
 
-        int finishX = maze.startX, finishY = maze.startY;
+        Point3D finish = new Point3D(maze.start);
 
-        for (int x = 0; x < maze.width; ++x) {
-            for (int y = 0; y < maze.height; ++y) {
-                if (!shortestPaths.isReachable(x, y)) continue;
-                if (!maze.isEdge(x, y)) continue;
-                if (maze.isStart(x, y)) continue;
+        for (int z = 0; z < maze.layersCount; ++z) {
+            for (int x = 0; x < maze.width; ++x) {
+                for (int y = 0; y < maze.height; ++y) {
+                    if (!shortestPaths.isReachable(x, y, z)) continue;
+                    if (!maze.isEdge(x, y, z)) continue;
+                    if (maze.isStart(x, y, z)) continue;
 
-                int distance = shortestPaths.getDistance(x, y);
-                if (shortestPaths.getDistance(finishX, finishY) < distance) {
-                    finishX = x;
-                    finishY = y;
+                    int distance = shortestPaths.getDistance(x, y, z);
+                    if (shortestPaths.getDistance(finish) < distance) {
+                        finish.set(x, y, z);
+                    }
                 }
             }
         }
 
-        maze.setFinish(finishX, finishY);
+
+        maze.setFinish(finish);
     }
 
     @Override
