@@ -208,11 +208,9 @@ public class Controller implements Initializable {
                 Point3D next = startFinishPath.get(pathIndex + 1);
 
                 if (next.equalsTo(cell.x, cell.y, z - 1)) {
-                    graphicsContext.setFill(Color.PURPLE);
                     drawMazeHalf(graphicsContext, cellWidth, cellHeight, cell.x, cell.y, DOWN);
                 }
                 if (next.equalsTo(cell.x, cell.y, z + 1)) {
-                    graphicsContext.setFill(Color.ORANGE);
                     drawMazeHalf(graphicsContext, cellWidth, cellHeight, cell.x, cell.y, UP);
                 }
             }
@@ -237,8 +235,8 @@ public class Controller implements Initializable {
         layerDownButton.setVisible(true);
         layerUpButton.setVisible(true);
 
-        selectedLayerLabel.setVisible(false);
-        selectedLayerTextField.setVisible(false);
+        selectedLayerLabel.setVisible(true);
+        selectedLayerTextField.setVisible(true);
 
         drawLastMaze();
 
@@ -471,6 +469,7 @@ public class Controller implements Initializable {
         goLeftButton.setOnAction(event -> {
             if (null == userPosition) return;
 
+            if (0 == userPosition.x) return;
             if (lastMaze.isWall(userPosition.x - 1, userPosition.y, userPosition.z)) return;
 
             --userPosition.x;
@@ -480,6 +479,7 @@ public class Controller implements Initializable {
         goRightButton.setOnAction(event -> {
             if (null == userPosition) return;
 
+            if (lastMaze.width - 1 == userPosition.x) return;
             if (lastMaze.isWall(userPosition.x + 1, userPosition.y, userPosition.z)) return;
 
             ++userPosition.x;
@@ -489,6 +489,7 @@ public class Controller implements Initializable {
         goUpButton.setOnAction(event -> {
             if (null == userPosition) return;
 
+            if (0 == userPosition.y) return;
             if (lastMaze.isWall(userPosition.x, userPosition.y - 1, userPosition.z)) return;
 
             --userPosition.y;
@@ -498,6 +499,7 @@ public class Controller implements Initializable {
         goDownButton.setOnAction(event -> {
             if (null == userPosition) return;
 
+            if (lastMaze.height - 1 == userPosition.y) return;
             if (lastMaze.isWall(userPosition.x, userPosition.y + 1, userPosition.z)) return;
 
             ++userPosition.y;
