@@ -20,7 +20,7 @@ public class Main extends Application {
         Parent root = FXMLLoader.load(getClass().getResource("main_scene.fxml"));
         primaryStage.setTitle("Supermassive blackhole");
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        primaryStage.setScene(new Scene(root, screenSize.width / 2.0, screenSize.height / 2.0));
+        primaryStage.setScene(new Scene(root, screenSize.width / 1.5, screenSize.height / 1.5));
         primaryStage.show();
     }
 
