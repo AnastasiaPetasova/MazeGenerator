@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.awt.*;
+import java.net.URL;
 
 public class Main extends Application {
 
@@ -18,9 +19,17 @@ public class Main extends Application {
         Main.stage = primaryStage;
 
         Parent root = FXMLLoader.load(getClass().getResource("main_scene.fxml"));
-        primaryStage.setTitle("Supermassive blackhole");
+        primaryStage.setTitle("Генератор 3D-лабиринтов");
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        primaryStage.setScene(new Scene(root, screenSize.width / 1.5, screenSize.height / 1.5));
+        double coeff = 2;
+        primaryStage.setScene(new Scene(root, screenSize.width / coeff, screenSize.height / coeff));
+
+        URL url = this.getClass().getResource("styles.css");
+        if (url != null) {
+            String css = url.toExternalForm();
+            primaryStage.getScene().getStylesheets().add(css);
+        }
+
         primaryStage.show();
     }
 

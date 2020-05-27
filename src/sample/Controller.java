@@ -202,16 +202,18 @@ public class Controller implements Initializable {
             if (z == cell.z) {
                 graphicsContext.setFill(Color.YELLOW);
                 drawMazeCell(graphicsContext, cellWidth, cellHeight, cell.x, cell.y);
-            }
 
-            if (pathIndex + 1 < startFinishPath.size()) {
-                Point3D next = startFinishPath.get(pathIndex + 1);
+                if (pathIndex + 1 < startFinishPath.size()) {
+                    Point3D next = startFinishPath.get(pathIndex + 1);
 
-                if (next.equalsTo(cell.x, cell.y, z - 1)) {
-                    drawMazeHalf(graphicsContext, cellWidth, cellHeight, cell.x, cell.y, DOWN);
-                }
-                if (next.equalsTo(cell.x, cell.y, z + 1)) {
-                    drawMazeHalf(graphicsContext, cellWidth, cellHeight, cell.x, cell.y, UP);
+                    graphicsContext.setFill(Color.BLACK);
+                    if (next.equalsTo(cell.x, cell.y, z - 1)) {
+                        drawMazeHalf(graphicsContext, cellWidth, cellHeight, cell.x, cell.y, DOWN);
+                    }
+
+                    if (next.equalsTo(cell.x, cell.y, z + 1)) {
+                        drawMazeHalf(graphicsContext, cellWidth, cellHeight, cell.x, cell.y, UP);
+                    }
                 }
             }
         }
@@ -228,9 +230,7 @@ public class Controller implements Initializable {
     void initializeAndDraw(Maze maze){
         lastMaze = maze;
 
-        // TODO move it all to setLayer
-        setLayer(1);
-        layerUpButton.setDisable(false);
+        setLayer(lastMaze.start.z);
 
         layerDownButton.setVisible(true);
         layerUpButton.setVisible(true);
@@ -242,6 +242,9 @@ public class Controller implements Initializable {
 
         this.userPosition = new Point3D(lastMaze.start);
         updateUserElements();
+
+        saveAsImageButton.setVisible(true);
+        saveToTextButton.setVisible(true);
     }
 
     void printParameters(MazeParameters mazeParameters) {
@@ -328,8 +331,6 @@ public class Controller implements Initializable {
     }
 
     private void initializeButtons() {
-        generateButton.setText("Сгенерируй нам, мальчик!");
-
         generateButton.setOnAction(actionEvent -> {
             initializeAndDraw(generateMaze());
 
@@ -341,17 +342,14 @@ public class Controller implements Initializable {
             MazeService.saveAsImage(MazeService.IMAGE_DIRECTORY + MazeService.createTimeStampFileName(MazeService.PNG), canvas);
         });
 
-        saveToTextButton.setText("Сохранить как текст");
         saveToTextButton.setOnAction(actionEvent -> {
             saveToText();
         });
 
-        loadFromTextButton.setText("Загрузить из текста");
         loadFromTextButton.setOnAction(actionEvent -> {
             loadFromTextAndDraw();
         });
 
-        saveAsImageButton.setText("Сохранить как картинку");
         saveAsImageButton.setOnAction(actionEvent -> {
             saveAsImage();
         });
@@ -380,6 +378,9 @@ public class Controller implements Initializable {
     private void setLayer(int layer) {
         selectedLayer = layer;
         selectedLayerTextField.setText("" + selectedLayer);
+
+        layerUpButton.setDisable(lastMaze.layersCount - 1 == layer);
+        layerDownButton.setDisable(1 == layer);
     }
 
     private void showDownLayer() {
@@ -449,7 +450,7 @@ public class Controller implements Initializable {
         goLayerDownButton.setVisible(visible);
         goLayerUpButton.setVisible(visible);
 
-        fogModeComboBox.setVisible(visible);
+//        fogModeComboBox.setVisible(visible);
     }
 
     private void updateUserState() {
@@ -468,6 +469,7 @@ public class Controller implements Initializable {
 
         goLeftButton.setOnAction(event -> {
             if (null == userPosition) return;
+            if (selectedLayer != userPosition.z) return;
 
             if (0 == userPosition.x) return;
             if (lastMaze.isWall(userPosition.x - 1, userPosition.y, userPosition.z)) return;
@@ -478,6 +480,7 @@ public class Controller implements Initializable {
 
         goRightButton.setOnAction(event -> {
             if (null == userPosition) return;
+            if (selectedLayer != userPosition.z) return;
 
             if (lastMaze.width - 1 == userPosition.x) return;
             if (lastMaze.isWall(userPosition.x + 1, userPosition.y, userPosition.z)) return;
@@ -488,6 +491,7 @@ public class Controller implements Initializable {
 
         goUpButton.setOnAction(event -> {
             if (null == userPosition) return;
+            if (selectedLayer != userPosition.z) return;
 
             if (0 == userPosition.y) return;
             if (lastMaze.isWall(userPosition.x, userPosition.y - 1, userPosition.z)) return;
@@ -498,6 +502,7 @@ public class Controller implements Initializable {
 
         goDownButton.setOnAction(event -> {
             if (null == userPosition) return;
+            if (selectedLayer != userPosition.z) return;
 
             if (lastMaze.height - 1 == userPosition.y) return;
             if (lastMaze.isWall(userPosition.x, userPosition.y + 1, userPosition.z)) return;
@@ -508,6 +513,7 @@ public class Controller implements Initializable {
 
         goLayerDownButton.setOnAction(event -> {
             if (null == userPosition) return;
+            if (selectedLayer != userPosition.z) return;
 
             if (userPosition.z == 0 || lastMaze.isWall(userPosition.x, userPosition.y, userPosition.z - 1)) return;
 
@@ -519,6 +525,7 @@ public class Controller implements Initializable {
 
         goLayerUpButton.setOnAction(event -> {
             if (null == userPosition) return;
+            if (selectedLayer != userPosition.z) return;
 
             if (userPosition.z == lastMaze.layersCount - 1 || lastMaze.isWall(userPosition.x, userPosition.y, userPosition.z + 1)) return;
 

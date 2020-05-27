@@ -34,7 +34,7 @@ public class DivideAndConquerGenerator extends PerfectWallGenerator {
 
         if (largesCount < 2) return;
 
-        if (xSize == 2 && ySize == 2 && zSize == 2) {
+        if (xSize <= 2 && ySize <= 2 && zSize <= 2) {
             List<Point3D> possibleCuts = new ArrayList<>();
 
             for (int z = leftZ; z < rightZ; ++z) {
@@ -57,52 +57,45 @@ public class DivideAndConquerGenerator extends PerfectWallGenerator {
             return;
         }
 
-        List<Integer> possibleXs = new ArrayList<>();
-        List<Integer> possibleYs = new ArrayList<>();
-        List<Integer> possibleZs = new ArrayList<>();
+        List<Point3D> possibleXs = new ArrayList<>();
+        List<Point3D> possibleYs = new ArrayList<>();
+        List<Point3D> possibleZs = new ArrayList<>();
 
         for (int x = leftX; x < rightX; ++x) {
-            possibleXs.add(x);
+            for (int y = leftY; y < rightY; ++y) {
+                for (int z = leftZ; z < rightZ; ++z) {
+                    Point3D point = new Point3D(x, y, z);
+                    if (enters.contains(point)) continue;
+
+                    if (leftX < x && x < rightX - 1) possibleXs.add(point);
+                    if (leftY < y && y < rightY - 1) possibleYs.add(point);
+                    if (leftZ < z && z < rightZ - 1) possibleZs.add(point);
+                }
+            }
         }
 
-        for (int y = leftY; y < rightY; ++y) {
-            possibleYs.add(y);
-        }
-
-        for (int z = leftZ; z < rightZ; ++z) {
-            possibleZs.add(z);
-        }
-
-        for (Point3D enter : enters) {
-            possibleXs.remove(Integer.valueOf(enter.x));
-            possibleYs.remove(Integer.valueOf(enter.y));
-            possibleZs.remove(Integer.valueOf(enter.z));
-        }
-
-        if (possibleXs.isEmpty() && possibleYs.isEmpty() && possibleZs.isEmpty()) return;
-
-        int possibleXSize = (xSize <= 2 || possibleXs.isEmpty()) ? 0 : possibleXs.size();
-        int possibleYSize = (ySize <= 2 || possibleYs.isEmpty()) ? 0 : possibleYs.size();
-        int possibleZSize = (zSize <= 2 || possibleZs.isEmpty()) ? 0 : possibleZs.size();
+        int possibleXSize = possibleXs.size();
+        int possibleYSize = possibleYs.size();
+        int possibleZSize = possibleZs.size();
 
         int totalSize = possibleXSize + possibleYSize + possibleZSize;
         if (0 == totalSize) return;
 
         int totalIndex = UtilsRandom.nextInt(0, totalSize);
         if (totalIndex < possibleXSize) {
-            cutX(leftX, rightX, leftY, rightY, leftZ, rightZ, enters, possibleXs);
+            cutX(leftX, rightX, leftY, rightY, leftZ, rightZ, enters, possibleXs.get(totalIndex));
         } else if (totalIndex < possibleXSize + possibleYSize) {
-            cutY(leftX, rightX, leftY, rightY, leftZ, rightZ, enters, possibleYs);
+            cutY(leftX, rightX, leftY, rightY, leftZ, rightZ, enters, possibleYs.get(totalIndex - possibleXSize));
         } else {
-            cutZ(leftX, rightX, leftY, rightY, leftZ, rightZ, enters, possibleZs);
+            cutZ(leftX, rightX, leftY, rightY, leftZ, rightZ, enters, possibleZs.get(totalIndex - possibleXSize - possibleYSize));
         }
     }
 
     private void cutZ(int leftX, int rightX, int leftY, int rightY, int leftZ, int rightZ,
-                      List<Point3D> enters, List<Integer> possibleZs) {
-        final int divideZ = UtilsRandom.nextElement(possibleZs);
-        final int divideEnterX = UtilsRandom.nextInt(leftX, rightX);
-        final int divideEnterY = UtilsRandom.nextInt(leftY, rightY);
+                      List<Point3D> enters, Point3D dividePoint) {
+        final int divideEnterX = dividePoint.x;
+        final int divideEnterY = dividePoint.y;
+        final int divideEnterZ = dividePoint.z;
 
         for (int x = leftX; x < rightX; ++x) {
             for (int y = leftY; y < rightY; ++y) {
@@ -110,14 +103,14 @@ public class DivideAndConquerGenerator extends PerfectWallGenerator {
 
                 boolean needCut = true;
                 for (Point3D enter : enters) {
-                    if (enter.equalsTo(x, y, divideZ)) {
+                    if (enter.equalsTo(x, y, divideEnterZ)) {
                         needCut = false;
                         break;
                     }
                 }
 
                 if (needCut) {
-                    cutCell(x, y, divideZ);
+                    cutCell(x, y, divideEnterZ);
                 }
 
             }
@@ -125,30 +118,30 @@ public class DivideAndConquerGenerator extends PerfectWallGenerator {
 
         List<Point3D> leftEnters = new ArrayList<>();
         for (Point3D enter : enters) {
-            if (enter.z < divideZ) {
+            if (enter.z < divideEnterZ) {
                 leftEnters.add(enter);
             }
         }
 
-        leftEnters.add(new Point3D(divideEnterX, divideEnterY, divideZ - 1));
-        cut(leftX, rightX, leftY, rightY, leftZ, divideZ, leftEnters);
+        leftEnters.add(new Point3D(divideEnterX, divideEnterY, divideEnterZ - 1));
+        cut(leftX, rightX, leftY, rightY, leftZ, divideEnterZ, leftEnters);
 
         List<Point3D> rightEnters = new ArrayList<>();
         for (Point3D enter : enters) {
-            if (enter.z > divideZ) {
+            if (enter.z > divideEnterZ) {
                 rightEnters.add(enter);
             }
         }
 
-        rightEnters.add(new Point3D(divideEnterX, divideEnterY, divideZ + 1));
-        cut(leftX, rightX, leftY, rightY, divideZ + 1, rightZ, rightEnters);
+        rightEnters.add(new Point3D(divideEnterX, divideEnterY, divideEnterZ + 1));
+        cut(leftX, rightX, leftY, rightY, divideEnterZ + 1, rightZ, rightEnters);
     }
 
     private void cutY(int leftX, int rightX, int leftY, int rightY, int leftZ, int rightZ,
-                      List<Point3D> enters, List<Integer> possibleYs) {
-        final int divideY = UtilsRandom.nextElement(possibleYs);
-        final int divideEnterX = UtilsRandom.nextInt(leftX, rightX);
-        final int divideEnterZ = UtilsRandom.nextInt(leftZ, rightZ);
+                      List<Point3D> enters, Point3D dividePoint) {
+        final int divideEnterX = dividePoint.x;
+        final int divideEnterY = dividePoint.y;
+        final int divideEnterZ = dividePoint.z;
 
         for (int z = leftZ; z < rightZ; ++z) {
             for (int x = leftX; x < rightX; ++x) {
@@ -156,14 +149,14 @@ public class DivideAndConquerGenerator extends PerfectWallGenerator {
 
                 boolean needCut = true;
                 for (Point3D enter : enters) {
-                    if (enter.equalsTo(x, divideY, z)) {
+                    if (enter.equalsTo(x, divideEnterY, z)) {
                         needCut = false;
                         break;
                     }
                 }
 
                 if (needCut) {
-                    cutCell(x, divideY, z);
+                    cutCell(x, divideEnterY, z);
                 }
 
             }
@@ -171,67 +164,67 @@ public class DivideAndConquerGenerator extends PerfectWallGenerator {
 
         List<Point3D> leftEnters = new ArrayList<>();
         for (Point3D enter : enters) {
-            if (enter.y < divideY) {
+            if (enter.y < divideEnterY) {
                 leftEnters.add(enter);
             }
         }
 
-        leftEnters.add(new Point3D(divideEnterX, divideY - 1, divideEnterZ));
-        cut(leftX, rightX, leftY, divideY, leftZ, rightZ, leftEnters);
+        leftEnters.add(new Point3D(divideEnterX, divideEnterY - 1, divideEnterZ));
+        cut(leftX, rightX, leftY, divideEnterY, leftZ, rightZ, leftEnters);
 
         List<Point3D> rightEnters = new ArrayList<>();
         for (Point3D enter : enters) {
-            if (enter.y > divideY) {
+            if (enter.y > divideEnterY) {
                 rightEnters.add(enter);
             }
         }
 
-        rightEnters.add(new Point3D(divideEnterX, divideY + 1, divideEnterZ));
-        cut(leftX, rightX, divideY + 1, rightY, leftZ, rightZ, rightEnters);
+        rightEnters.add(new Point3D(divideEnterX, divideEnterY + 1, divideEnterZ));
+        cut(leftX, rightX, divideEnterY + 1, rightY, leftZ, rightZ, rightEnters);
     }
 
     private void cutX(int leftX, int rightX, int leftY, int rightY, int leftZ, int rightZ,
-                      List<Point3D> enters, List<Integer> possibleXs) {
-        final int divideX = UtilsRandom.nextElement(possibleXs);
-        final int divideEnterY = UtilsRandom.nextInt(leftY, rightY);
-        final int divideEnterZ = UtilsRandom.nextInt(leftZ, rightZ);
+                      List<Point3D> enters, Point3D dividePoint) {
+        final int divideEnterX = dividePoint.x;
+        final int divideEnterY = dividePoint.y;
+        final int divideEnterZ = dividePoint.z;
 
         for (int z = leftZ; z < rightZ; ++z) {
             for (int y = leftY; y < rightY; ++y) {
-                if (divideEnterY == y || divideEnterZ == z) continue;
+                if (divideEnterY == y && divideEnterZ == z) continue;
 
                 boolean needCut = true;
                 for (Point3D enter : enters) {
-                    if (enter.equalsTo(divideX, y, z)) {
+                    if (enter.equalsTo(divideEnterX, y, z)) {
                         needCut = false;
                         break;
                     }
                 }
 
                 if (needCut) {
-                    cutCell(divideX, y, z);
+                    cutCell(divideEnterX, y, z);
                 }
             }
         }
 
         List<Point3D> leftEnters = new ArrayList<>();
         for (Point3D enter : enters) {
-            if (enter.x < divideX) {
+            if (enter.x < divideEnterX) {
                 leftEnters.add(enter);
             }
         }
 
-        leftEnters.add(new Point3D(divideX - 1, divideEnterY, divideEnterZ));
-        cut(leftX, divideX, leftY, rightY, leftZ, rightZ, leftEnters);
+        leftEnters.add(new Point3D(divideEnterX - 1, divideEnterY, divideEnterZ));
+        cut(leftX, divideEnterX, leftY, rightY, leftZ, rightZ, leftEnters);
 
         List<Point3D> rightEnters = new ArrayList<>();
         for (Point3D enter : enters) {
-            if (enter.x > divideX) {
+            if (enter.x > divideEnterX) {
                 rightEnters.add(enter);
             }
         }
 
-        rightEnters.add(new Point3D(divideX + 1, divideEnterY, divideEnterZ));
-        cut(divideX + 1, rightX, leftY, rightY, leftZ, rightZ, rightEnters);
+        rightEnters.add(new Point3D(divideEnterX + 1, divideEnterY, divideEnterZ));
+        cut(divideEnterX + 1, rightX, leftY, rightY, leftZ, rightZ, rightEnters);
     }
 }

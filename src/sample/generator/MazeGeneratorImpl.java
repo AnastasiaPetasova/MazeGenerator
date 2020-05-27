@@ -57,7 +57,7 @@ public abstract class MazeGeneratorImpl implements MazeGenerator {
             int neighbourY = point.y + step.y;
             int neighbourZ = point.z + step.z;
 
-            if (maze.isOuterWall(neighbourX, neighbourY, neighbourZ)) {
+            if (maze.canBeExit(neighbourX, neighbourY, neighbourZ)) {
                 edgeNeighbours.add(new Point3D(neighbourX, neighbourY, neighbourZ));
             }
         }

@@ -108,7 +108,7 @@ public class Maze {
     }
 
     public boolean isEdge(int x, int y, int z) {
-        return isNearEdgeIndex(x, width) || isNearEdgeIndex(y, height) || isNearEdgeIndex(z, layersCount);
+        return isNearEdgeIndex(x, width) || isNearEdgeIndex(y, height);// && !isNearEdgeIndex(z, layersCount);
     }
 
     public boolean isOuterWall(Point3D point) {
@@ -117,6 +117,10 @@ public class Maze {
 
     public boolean isOuterWall(int x, int y, int z) {
         return isEdgeIndex(x, width) || isEdgeIndex(y, height) || isEdgeIndex(z, layersCount);
+    }
+
+    public boolean canBeExit(int x, int y, int z) {
+        return !isEdgeIndex(z, layersCount) && (isEdgeIndex(x, width) || isEdgeIndex(y, height));
     }
 
     public boolean isStart(Point3D point) {

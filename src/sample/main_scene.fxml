@@ -3,38 +3,38 @@
 <?import javafx.scene.layout.*?>
 <GridPane fx:controller="sample.Controller"
           xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
-    <ListView fx:id="mazeGeneratorListView" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
+    <ListView fx:id="mazeGeneratorListView" styleClass="font_class" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
     <Canvas fx:id="canvas"
             GridPane.rowIndex="0" GridPane.rowSpan="4"
             GridPane.columnIndex="2" GridPane.columnSpan="6"/>
-    <Button fx:id="generateButton" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
-    <Button fx:id="saveToTextButton" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
-    <Button fx:id="loadFromTextButton" GridPane.rowIndex="4" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
-    <Button fx:id="saveAsImageButton" GridPane.rowIndex="5" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
+    <Button fx:id="generateButton" styleClass="font_class" GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.columnSpan="2" text="Сгенерировать лабиринт"/>
+    <Button fx:id="saveToTextButton" styleClass="font_class" GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.columnSpan="2" visible="false" text="Сохранить в текстовый файл"/>
+    <Button fx:id="loadFromTextButton" styleClass="font_class" GridPane.rowIndex="4" GridPane.columnIndex="0" GridPane.columnSpan="2" text="Загрузить из текстового файла"/>
+    <Button fx:id="saveAsImageButton" styleClass="font_class" GridPane.rowIndex="5" GridPane.columnIndex="0" GridPane.columnSpan="2" visible="false" text="Сохранить как изображение"/>
 
-    <CheckBox fx:id="showPathCheckBox" GridPane.rowIndex="5" GridPane.columnIndex="2" text="Показать кратчайший путь"/>
+    <CheckBox fx:id="showPathCheckBox" styleClass="font_class" GridPane.rowIndex="4" GridPane.columnIndex="2" text="Отобразить кратчайший путь"/>
 
-    <Label fx:id="mazeParametersLabel"
-           GridPane.rowIndex="5" GridPane.columnIndex="3" GridPane.columnSpan="5"/>
+    <Label fx:id="mazeParametersLabel" styleClass="font_class"
+           GridPane.rowIndex="5" GridPane.columnIndex="2" GridPane.columnSpan="6"/>
 
-    <Label fx:id="selectedLayerLabel" GridPane.rowIndex="6" GridPane.columnIndex="0" text="Текущий уровень"/>
-    <TextField fx:id="selectedLayerTextField" editable="false"
+    <Label fx:id="selectedLayerLabel" styleClass="font_class" GridPane.rowIndex="6" GridPane.columnIndex="0" text="Текущий уровень"/>
+    <TextField fx:id="selectedLayerTextField" editable="false" styleClass="font_class"
                GridPane.rowIndex="6" GridPane.columnIndex="1"/>
 
-    <Button fx:id="layerDownButton" text="Показать уровень ниже" GridPane.rowIndex="6" GridPane.columnIndex="2"/>
-    <Button fx:id="layerUpButton" text="Показать уровень выше" GridPane.rowIndex="6" GridPane.columnIndex="3"/>
+    <Button fx:id="layerDownButton" styleClass="font_class" text="Показать уровень ниже" GridPane.rowIndex="6" GridPane.columnIndex="2"/>
+    <Button fx:id="layerUpButton" styleClass="font_class" text="Показать уровень выше" GridPane.rowIndex="6" GridPane.columnIndex="3"/>
 
-    <Button fx:id="goUpButton" GridPane.rowIndex="6" GridPane.columnIndex="5" text="^"/>
-    <Button fx:id="goLayerUpButton" GridPane.rowIndex="6" GridPane.columnIndex="7" text="Подняться на уровень выше"/>
+    <Button fx:id="goUpButton" styleClass="font_class" GridPane.rowIndex="6" GridPane.columnIndex="5" text="^"/>
+    <Button fx:id="goLayerUpButton" styleClass="font_class" GridPane.rowIndex="6" GridPane.columnIndex="7" text="Подняться на уровень выше"/>
 
-    <CheckBox fx:id="userModeCheckBox" GridPane.rowIndex="7" GridPane.columnIndex="0" text="Ручной режим"/>
+    <CheckBox fx:id="userModeCheckBox" styleClass="font_class" GridPane.rowIndex="7" GridPane.columnIndex="0" text="Ручной режим"/>
 
-    <ComboBox fx:id="fogModeComboBox" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+    <ComboBox fx:id="fogModeComboBox" styleClass="font_class" GridPane.rowIndex="7" GridPane.columnIndex="1" visible="false"/>
 
-    <Button fx:id="goLeftButton" GridPane.rowIndex="7" GridPane.columnIndex="4" text="&lt;"/>
-    <Button fx:id="goDownButton" GridPane.rowIndex="7" GridPane.columnIndex="5" text="v"/>
-    <Button fx:id="goRightButton" GridPane.rowIndex="7" GridPane.columnIndex="6" text=">"/>
+    <Button fx:id="goLeftButton" styleClass="font_class" GridPane.rowIndex="7" GridPane.columnIndex="4" text="&lt;"/>
+    <Button fx:id="goDownButton" styleClass="font_class" GridPane.rowIndex="7" GridPane.columnIndex="5" text="v"/>
+    <Button fx:id="goRightButton" styleClass="font_class" GridPane.rowIndex="7" GridPane.columnIndex="6" text=">"/>
 
-    <Button fx:id="goLayerDownButton" GridPane.rowIndex="7" GridPane.columnIndex="7" text="Спуститься на уровень ниже"/>
+    <Button fx:id="goLayerDownButton" styleClass="font_class" GridPane.rowIndex="7" GridPane.columnIndex="7" text="Спуститься на уровень ниже"/>
 
 </GridPane>
